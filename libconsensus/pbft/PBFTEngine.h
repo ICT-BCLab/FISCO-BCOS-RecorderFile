@@ -43,6 +43,7 @@
 #include <libstorage/BasicRocksDB.h>
 #include <libsync/SyncStatus.h>
 
+#include <librecorderfile/RecorderFile.h>
 namespace dev
 {
 namespace consensus
@@ -764,6 +765,9 @@ protected:
     // Make object destructive overhead asynchronous
     dev::ThreadPool::Ptr m_destructorThread;
     bool m_enablePrepareWithTxsHash = false;
+
+    // 共识开始时间
+    std::string m_pbft_start;
 };
 }  // namespace consensus
 }  // namespace dev

@@ -208,6 +208,16 @@ void Session::write()
         {
             if (m_socket->isConnected())
             {
+                auto measure_time=dev::getFormattedMeasureTime();
+                auto action_type="Sent";
+                auto message_type="P2P";
+                auto message_size=buffer->size();
+                // record节点收发消息总量
+                std::stringstream ss;
+                ss<<measure_time<<","<<action_type<<","<<message_type<<","<<message_size<<"\n";
+                std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+                recorderfile->Record(ss.str(),"peer_message_throughput");
+
                 // asio::buffer referecne buffer, so buffer need alive before asio::buffer be used
                 server->asioInterface()->asyncWrite(m_socket, boost::asio::buffer(*buffer),
                     boost::bind(&Session::onWrite, session, boost::asio::placeholders::error,
@@ -420,6 +430,16 @@ void Session::doRead()
                     ssize_t result = message->decode(s->m_data.data(), s->m_data.size());
                     if (result > 0)
                     {
+                        auto measure_time=dev::getFormattedMeasureTime();
+                        auto action_type="Received";
+                        auto message_type="P2P";
+                        auto message_size=result;
+                        // record节点收发消息总量
+                        std::stringstream ss;
+                        ss<<measure_time<<","<<action_type<<","<<message_type<<","<<message_size<<"\n";
+                        std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+                        recorderfile->Record(ss.str(),"peer_message_throughput");
+                        
                         /// SESSION_LOG(TRACE) << "Decode success: " << result;
                         NetworkException e(P2PExceptionType::Success, "Success");
                         s->onMessage(e, message);

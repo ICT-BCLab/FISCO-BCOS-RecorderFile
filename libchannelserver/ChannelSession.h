@@ -40,6 +40,8 @@
 #include <boost/asio/ssl.hpp>
 #include <boost/asio/ssl/stream.hpp>
 
+#include <librecorderfile/RecorderFile.h>
+
 namespace dev
 {
 namespace channel

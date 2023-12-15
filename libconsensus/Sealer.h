@@ -35,6 +35,8 @@
 #include <libsync/SyncInterface.h>
 #include <libtxpool/TxPool.h>
 #include <libtxpool/TxPoolInterface.h>
+
+#include <librecorderfile/RecorderFile.h>
 namespace dev
 {
 namespace consensus

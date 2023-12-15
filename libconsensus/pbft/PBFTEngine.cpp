@@ -27,6 +27,9 @@
 #include <libdevcore/CommonJS.h>
 #include <libethcore/CommonJS.h>
 #include <libtxpool/TxPool.h>
+
+#include <typeinfo>
+
 using namespace dev::eth;
 using namespace dev::db;
 using namespace dev::blockverifier;
@@ -899,6 +902,8 @@ void PBFTEngine::execBlock(Sealing& sealing, PrepareReq::Ptr _req, std::ostrings
     auto decode_time_cost = utcTime() - record_time;
     record_time = utcTime();
 
+    auto start_validate_time=dev::getFormattedMeasureTime(); // 开始验证时间
+
     m_sealingNumber = sealing.block->getTransactionSize();
 
     /// return directly if it's an empty block
@@ -910,6 +915,15 @@ void PBFTEngine::execBlock(Sealing& sealing, PrepareReq::Ptr _req, std::ostrings
 
     checkBlockValid(*(sealing.block));
     checkTransactionsValid(sealing.block, _req);
+
+    auto end_validate_time=dev::getFormattedMeasureTime(); // 结束验证时间
+    auto cost_time=dev::calcTimeDiff(start_validate_time,end_validate_time); // 验证耗时
+    // record区块验证耗时
+    stringstream ss;
+    ss<<start_validate_time<<","<<end_validate_time<<","<<cost_time<<","<<sealing.block->blockHeader().number()<<","<<sealing.block->getTransactionSize()<<"\n";
+    std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+    recorderfile->Record(ss.str(),"block_validation_efficiency");
+
     auto check_time_cost = utcTime() - record_time;
     record_time = utcTime();
 
@@ -1061,6 +1075,9 @@ bool PBFTEngine::handlePrepareMsg(PrepareReq::Ptr prepareReq, std::string const&
         << LOG_KV("hash", prepareReq->block_hash.abridged()) << LOG_KV("nodeIdx", nodeIdx())
         << LOG_KV("myNode", m_keyPair.pub().abridged())
         << LOG_KV("curChangeCycle", m_timeManager.m_changeCycle);
+    
+    m_pbft_start=dev::getFormattedMeasureTime(); // pbft共识开始时间
+
     /// check the prepare request is valid or not
     auto valid_ret = isValidPrepare(*prepareReq, oss);
     if (valid_ret == CheckResult::INVALID)
@@ -1239,6 +1256,21 @@ void PBFTEngine::checkAndSave()
         m_reqCache->getCommitCacheSize(m_reqCache->prepareCache().block_hash, minValidNodeSize);
     if (sign_size >= minValidNodeSize && commit_size >= minValidNodeSize)
     {
+        // pbft共识结束
+        auto pbft_end=dev::getFormattedMeasureTime();
+        auto cost_time=calcTimeDiff(m_pbft_start,pbft_end);
+        auto pbft_type="PBFT";
+        std::string cur_type=typeid(*this).name();// 获取具体执行共识类的类名
+        if(cur_type.find("rPBFT")!= cur_type.npos){
+            pbft_type="rPBFT";
+        }
+
+        // record pbft一轮时长
+        std::stringstream ss;
+        ss<<m_consensusBlockNumber<<","<<m_pbft_start<<","<<pbft_end<<","<<cost_time<<","<<pbft_type<<"\n";
+        std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+        recorderfile->Record(ss.str(),"consensus_pbft_cost");
+        
         PBFTENGINE_LOG(INFO) << LOG_DESC("checkAndSave: CommitReq enough")
                              << LOG_KV("prepareHeight", m_reqCache->prepareCache().height)
                              << LOG_KV("commitSize", commit_size)

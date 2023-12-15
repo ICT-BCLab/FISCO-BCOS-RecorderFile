@@ -254,6 +254,16 @@ void ChannelSession::onRead(const boost::system::error_code& error, size_t bytes
 
                 if (result > 0)
                 {
+                    auto measure_time=dev::getFormattedMeasureTime();
+                    auto action_type="Received";
+                    auto message_type="Channel";
+                    auto message_size=result;
+                    // record节点收发消息总量
+                    std::stringstream ss;
+                    ss<<measure_time<<","<<action_type<<","<<message_type<<","<<message_size<<"\n";
+                    std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+                    recorderfile->Record(ss.str(),"peer_message_throughput");
+
                     onMessage(ChannelException(0, ""), message);
 
                     _recvProtocolBuffer.erase(
@@ -321,6 +331,16 @@ void ChannelSession::startWrite()
             auto s = session.lock();
             if (s)
             {
+                auto measure_time=dev::getFormattedMeasureTime();
+                auto action_type="Send";
+                auto message_type="Channel";
+                auto message_size=buffer->size();
+                // record节点收发消息总量
+                std::stringstream ss;
+                ss<<measure_time<<","<<action_type<<","<<message_type<<","<<message_size<<"\n";
+                std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+                recorderfile->Record(ss.str(),"peer_message_throughput");
+                
                 if (s->enableSSL())
                 {
                     boost::asio::async_write(*s->sslSocket(),

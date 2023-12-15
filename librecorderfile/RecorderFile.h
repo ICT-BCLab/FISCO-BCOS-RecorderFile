@@ -38,6 +38,7 @@ class RecorderFile
         void DbStateReadRateInit();
         void ConsensusPBFTCostInit();
         void ConsensusRaftCostInit();
+        void PeerMessageThroughputInit();
         void BlockValidationEfficiencyInit();
 
         void ConfigInit();
@@ -58,6 +59,7 @@ class RecorderFile
         ofstream DbStateReadRateF;
         ofstream ConsensusPBFTCostF;
         ofstream ConsensusRaftCostF;
+        ofstream PeerMessageThroughputF;
         ofstream BlockValidationEfficiencyF;
 };
 #endif

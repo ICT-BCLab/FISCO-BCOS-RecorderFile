@@ -310,6 +310,29 @@ void RecorderFile::ConsensusRaftCostInit()
     }
 }
 
+// 节点收发消息总量
+void RecorderFile::PeerMessageThroughputInit()
+{
+    string path =Workdir+"/peer_message_throughput.csv";
+    PeerMessageThroughputF.open(path, ios::out | ios::app);
+    if (!PeerMessageThroughputF)
+    {
+        RECORDEFILE_LOG(ERROR) << LOG_DESC("peer_message_throughput open failed");
+    }
+    try
+    {
+        string str = "measure_time,action_type,message_type,message_size\n";
+        PeerMessageThroughputF << str;
+        PeerMessageThroughputF.close();
+        RECORDEFILE_LOG(INFO) << LOG_DESC("[peer_message_throughput] init succeed");
+    }
+    catch (std::exception const& e)
+    {
+        RECORDEFILE_LOG(WARNING) << LOG_DESC("[peer_message_throughput] init failed")
+                            << LOG_KV("errorInfo", boost::diagnostic_information(e));
+    }
+}
+
 // 区块验证耗时
 void RecorderFile::BlockValidationEfficiencyInit()
 {
@@ -350,6 +373,7 @@ void RecorderFile::ConfigInit()
     DbStateReadRateInit();
     ConsensusPBFTCostInit();
     ConsensusRaftCostInit();
+    PeerMessageThroughputInit()
     BlockValidationEfficiencyInit();
 }
 

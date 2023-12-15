@@ -199,12 +199,26 @@ std::shared_ptr<Block> BlockChainImp::getBlock(dev::h256 const& _blockHash, int6
 {
     auto start_time = utcTime();
     auto record_time = utcTime();
+
+    auto start_cache=dev::getFormattedMeasureTime(); // 测量时间
+
     auto cachedBlock = m_blockCache.get(_blockHash);
+
+    auto end_cache=dev::getFormattedMeasureTime();
+    
     auto getCache_time_cost = utcTime() - record_time;
     record_time = utcTime();
 
     if (bool(cachedBlock.first))
     {
+        auto type="cache";
+        // record数据读取速率
+        stringstream ss;
+        ss<<start_cache<<","<<_blockHash<<","<<dev::calcTimeDiff(start_cache,end_cache)<<","<<type<<"\n";
+        // std::unique_ptr<RecorderFile> recorderfile(new RecorderFile());
+        std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+        recorderfile->Record(ss.str(),"db_state_read_rate");
+
         BLOCKCHAIN_LOG(TRACE) << LOG_DESC("[#getBlock]Cache hit, read from cache")
                               << LOG_KV("blockNumber", _blockNumber)
                               << LOG_KV("hash", _blockHash.abridged());
@@ -212,9 +226,13 @@ std::shared_ptr<Block> BlockChainImp::getBlock(dev::h256 const& _blockHash, int6
     }
     else
     {
+        auto type="storage";
+
         BLOCKCHAIN_LOG(TRACE) << LOG_DESC("[#getBlock]Cache missed, read from storage")
                               << LOG_KV("blockNumber", _blockNumber);
         ;
+        auto start_storage=dev::getFormattedMeasureTime();
+
         Table::Ptr tb = getMemoryTableFactory(_blockNumber)->openTable(SYS_HASH_2_BLOCK);
         auto openTable_time_cost = utcTime() - record_time;
         record_time = utcTime();
@@ -230,6 +248,13 @@ std::shared_ptr<Block> BlockChainImp::getBlock(dev::h256 const& _blockHash, int6
                 record_time = utcTime();
                 // use binary block since v2.2.0
                 auto block = decodeBlock(entry);
+                
+                auto end_storage=dev::getFormattedMeasureTime();
+                // record数据读取速率
+                stringstream ss;
+                ss<<start_storage<<","<<_blockHash<<","<<dev::calcTimeDiff(start_storage,end_storage)<<","<<type<<"\n";
+                std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+                recorderfile->Record(ss.str(),"db_state_read_rate");
 
                 auto constructBlock_time_cost = utcTime() - record_time;
                 record_time = utcTime();
@@ -1625,7 +1650,17 @@ CommitResult BlockChainImp::commitBlock(
             write_record_time = utcTime();
             try
             {
+                auto start_time=dev::getFormattedMeasureTime();
+
                 context->dbCommit(*block);
+
+                auto end_time=dev::getFormattedMeasureTime();
+                auto write_duration=dev::calcTimeDiff(start_time,end_time); 
+                // record数据库写入速率
+                stringstream ss;
+                ss<<start_time<<","<<end_time<<","<<block->blockHeader().number()<<","<<block->headerHash()<<","<<write_duration<<"\n";
+                std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+                recorderfile->Record(ss.str(),"db_state_write_rate");
             }
             catch (std::exception& e)
             {
@@ -1654,6 +1689,25 @@ CommitResult BlockChainImp::commitBlock(
         m_blockCache.add(block);
         auto addBlockCache_time_cost = utcTime() - record_time;
         record_time = utcTime();
+
+        // 区块提交成功（落盘）
+        auto block_tx_count=block->getTransactionSize(); // 区块内交易数量
+        auto measure_time=dev::getFormattedMeasureTime();
+        // record出块耗时[区块落盘时刻] 
+        stringstream ss;
+        ss<<measure_time<<","<<m_blockNumber<<","<<block->headerHash()<<","<<block_tx_count<<","<<block->transactionRoot()<<"\n";
+        std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+        recorderfile->Record(ss.str(),"block_commit_duration_end");
+
+        // 遍历block->Transactions得到它其中的每个交易，依次记录交易落盘
+        auto txs=block->transactions();
+        for(auto const&tx : *txs){
+            // record交易延迟[区块落盘时刻]
+            stringstream s;
+            s<<measure_time<<","<<m_blockNumber<<","<<tx->hash()<<"\n";
+            recorderfile->Record(s.str(),"tx_delay_end");
+        }
+
         m_onReady(m_blockNumber);
         auto noteReady_time_cost = utcTime() - record_time;
 

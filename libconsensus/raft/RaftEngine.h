@@ -242,6 +242,7 @@ protected:
 
 private:
     static typename raft::NodeIndex InvalidIndex;
+    std::string m_raft_start;
 };
 }  // namespace consensus
 }  // namespace dev
