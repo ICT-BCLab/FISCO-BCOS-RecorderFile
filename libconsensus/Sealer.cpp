@@ -128,8 +128,29 @@ void Sealer::doWork(bool wait)
                 m_signalled.wait_for(l, boost::chrono::milliseconds(1));
                 return;
             }
-            if (shouldHandleBlock())
+            if (shouldHandleBlock()){
+                // 开始生成新区块
+                auto measure_time=dev::getFormattedMeasureTime(); // 测量时间
+                auto block_height=m_sealing.block->header().number(); // 区块高度
+                // record出块耗时[开始生成区块时刻]
+                stringstream ss;
+                ss<<measure_time<<","<<block_height<<"\n";
+                std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+                recorderfile->Record(ss.str(),"block_commit_duration_start");
+
                 handleBlock();
+
+                auto tx_count=m_sealing.block->getTransactionSize();
+                if(tx_count>0){
+                    measure_time=dev::getFormattedMeasureTime(); // 测量时间
+                    block_height=m_sealing.block->header().number(); // 区块高度
+                    // record块内交易吞吐量[区块打包完成时刻]
+                    stringstream s;
+                    s<<measure_time<<","<<block_height<<","<<m_sealing.block->transactionRoot()<<","<<tx_count<<"\n";
+                    recorderfile->Record(s.str(),"tx_in_block_tps");
+                }
+            }
+                
         }
     }
     if (shouldWait(wait))

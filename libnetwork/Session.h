@@ -35,6 +35,7 @@
 #include "Common.h"
 #include "SessionFace.h"
 
+#include <librecorderfile/RecorderFile.h>
 
 namespace dev
 {

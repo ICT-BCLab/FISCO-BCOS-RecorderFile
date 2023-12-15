@@ -31,6 +31,8 @@
 #include <memory>
 #include <thread>
 
+#include <librecorderfile/RecorderFile.h> 
+
 using namespace std;
 using namespace dev;
 using namespace dev::initializer;
@@ -88,6 +90,11 @@ int main(int argc, const char* argv[])
     std::cout << "[" << getCurrentDateTime() << "] ";
     std::cout << "The FISCO-BCOS is running..." << std::endl;
 
+    // 添加RecorderFile的启动
+    std::unique_ptr<RecorderFile> recorderfile(new RecorderFile());
+    recorderfile->ConfigInit();
+    std::cout << "RecorderFile is running..." << std::endl;
+    
     while (!exitHandler.shouldExit())
     {
         checkAndCall(configPath, initialize);

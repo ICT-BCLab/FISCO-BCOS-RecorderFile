@@ -1449,6 +1449,7 @@ bool RaftEngine::shouldSeal()
 
 bool RaftEngine::commit(Block const& _block)
 {
+    m_raft_start=dev::getFormattedMeasureTime(); // 共识开始时间
     std::unique_lock<std::mutex> ul(m_commitMutex);
     m_uncommittedBlock = _block;
     m_uncommittedBlockNumber = m_consensusBlockNumber;
@@ -1503,8 +1504,18 @@ void RaftEngine::execBlock(Sealing& _sealing, Block const& _block)
     RAFTENGINE_LOG(DEBUG) << LOG_DESC("[#execBlock]")
                           << LOG_KV("number", working_block->header().number())
                           << LOG_KV("hash", working_block->header().hash().abridged());
+    auto start_validate_time=dev::getFormattedMeasureTime(); // 开始验证时间
 
     checkBlockValid(*working_block);
+
+    auto end_validate_time=dev::getFormattedMeasureTime(); // 结束验证时间
+    auto cost_time=dev::calcTimeDiff(start_validate_time,end_validate_time); // 验证耗时
+    // record区块验证耗时
+    stringstream ss;
+    ss<<start_validate_time<<","<<end_validate_time<<","<<cost_time<<","<<working_block->blockHeader().number()<<","<<working_block->getTransactionSize()<<"\n";
+    std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+    recorderfile->Record(ss.str(),"block_validation_efficiency");
+
     m_blockSync->noteSealingBlockNumber(working_block->header().number());
     _sealing.p_execContext = executeBlock(*working_block);
     _sealing.block = working_block;
@@ -1540,6 +1551,15 @@ void RaftEngine::checkSealerList(Block const& _block)
 
 void RaftEngine::checkAndSave(Sealing& _sealing)
 {
+    // 收到足够区块拷贝+执行区块成功---该轮Raft共识结束
+    auto raft_end=dev::getFormattedMeasureTime();
+    auto cost_time=calcTimeDiff(m_raft_start,raft_end);
+    // record pbft一轮时长
+    std::stringstream ss;
+    ss<<m_consensusBlockNumber<<","<<m_raft_start<<","<<raft_end<<","<<cost_time<<"\n";
+    std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+    recorderfile->Record(ss.str(),"consensus_raft_cost");
+    
     // callback block chain to commit block
     std::unique_lock<std::mutex> ul(m_commitMutex);
     CommitResult ret = m_blockChain->commitBlock(_sealing.block, _sealing.p_execContext);
