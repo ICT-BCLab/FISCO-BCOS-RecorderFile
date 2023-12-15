@@ -373,7 +373,7 @@ void RecorderFile::ConfigInit()
     DbStateReadRateInit();
     ConsensusPBFTCostInit();
     ConsensusRaftCostInit();
-    PeerMessageThroughputInit()
+    PeerMessageThroughputInit();
     BlockValidationEfficiencyInit();
 }
 
