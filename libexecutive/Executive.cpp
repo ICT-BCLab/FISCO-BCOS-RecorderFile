@@ -324,7 +324,6 @@ bool Executive::callRC2(CallParameters const& _p, u256 const& _gasPrice, Address
         m_excepted = TransactionException::AccountFrozen;
         return !m_ext;
     }
-
     auto contract_addr=_p.codeAddress; // 合约地址
     std::string start_time,end_time; // 开始时间和结束时间（格式化）
     std::string exec_time="";
@@ -365,12 +364,7 @@ bool Executive::callRC2(CallParameters const& _p, u256 const& _gasPrice, Address
             exec_time=dev::calcTimeDiff(start_time,end_time); // 计算执行时间
             // record合约执行时间[以太坊预编译合约]
             stringstream ss;
-            try{
-                ss<<m_t->hash()<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
-            }
-            catch(std::exception const& e){
-                ss<<""<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
-            }
+            ss<<""<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
             std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
             recorderfile->Record(ss.str(),"contract_time");
         }
@@ -401,12 +395,7 @@ bool Executive::callRC2(CallParameters const& _p, u256 const& _gasPrice, Address
 
             // record合约执行时间[C++预编译合约]
             stringstream ss;
-            try{
-                ss<<m_t->hash()<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
-            }
-            catch(std::exception const& e){
-                ss<<""<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
-            }
+            ss<<""<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
             std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
             recorderfile->Record(ss.str(),"contract_time");
 

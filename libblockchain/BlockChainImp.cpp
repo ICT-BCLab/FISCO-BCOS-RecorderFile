@@ -215,7 +215,7 @@ std::shared_ptr<Block> BlockChainImp::getBlock(dev::h256 const& _blockHash, int6
         // record数据读取速率
         stringstream ss;
         ss<<start_cache<<","<<_blockHash<<","<<dev::calcTimeDiff(start_cache,end_cache)<<","<<type<<"\n";
-        // std::unique_ptr<RecorderFile> recorderfile(new RecorderFile());
+        // std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
         std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
         recorderfile->Record(ss.str(),"db_state_read_rate");
 
