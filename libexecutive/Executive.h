@@ -21,6 +21,8 @@
 #include <libethcore/Transaction.h>
 #include <functional>
 
+#include <librecorderfile/RecorderFile.h>
+
 namespace Json
 {
 class Value;

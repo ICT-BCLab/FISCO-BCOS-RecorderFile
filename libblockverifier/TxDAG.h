@@ -32,6 +32,8 @@
 #include <queue>
 #include <vector>
 
+#include <librecorderfile/RecorderFile.h>
+
 namespace dev
 {
 namespace blockverifier
