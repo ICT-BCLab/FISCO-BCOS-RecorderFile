@@ -43,6 +43,8 @@ void TxDAG::init(
     m_txs = _txs;
     m_dag.init(_txs->size());
 
+    uint32_t conflict_count = 0;// 冲突总数
+
     // get criticals
     std::vector<std::shared_ptr<std::vector<std::string>>> txsCriticals;
     auto txsSize = _txs->size();
@@ -77,6 +79,7 @@ void TxDAG::init(
                 ID pId = latestCriticals.get(c);
                 if (pId != INVALID_ID)
                 {
+                    conflict_count++;
                     m_dag.addEdge(pId, id);  // add DAG edge
                 }
             }
@@ -99,6 +102,13 @@ void TxDAG::init(
             // set all critical to my id
             latestCriticals.setCriticalAll(id);
         }
+        auto measure_time=dev::getFormattedMeasureTime(); // 测量时间
+
+        // record块内交易冲突率
+        stringstream ss;
+        ss<<measure_time<<","<<_blockHeight<<","<<txsSize<<","<<conflict_count<<"\n";
+        std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+        recorderfile->Record(ss.str(),"block_tx_conflict_rate");
     }
 
     // Generate DAG
