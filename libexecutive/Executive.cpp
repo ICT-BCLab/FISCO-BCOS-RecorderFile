@@ -325,11 +325,19 @@ bool Executive::callRC2(CallParameters const& _p, u256 const& _gasPrice, Address
         return !m_ext;
     }
 
+    auto contract_addr=_p.codeAddress; // 合约地址
+    std::string start_time,end_time; // 开始时间和结束时间（格式化）
+    std::string exec_time="";
+    std::string type=""; // 合约类型
+
+    // 是以太坊预编译合约
     if (m_envInfo.precompiledEngine() &&
         m_envInfo.precompiledEngine()->isEthereumPrecompiled(_p.codeAddress))
     {
+        type="EthereumPrecompiled";
         if (g_BCOSConfig.version() >= V2_5_0)
         {
+            // 扣除gas
             auto gas = m_envInfo.precompiledEngine()->costOfPrecompiled(_p.codeAddress, _p.data);
             if (m_gas < gas)
             {
@@ -342,10 +350,30 @@ bool Executive::callRC2(CallParameters const& _p, u256 const& _gasPrice, Address
                 m_gas = (u256)(_p.gas - gas);
             }
         }
+        // 执行以太坊预编译合约
         bytes output;
         bool success;
+
+        start_time=dev::getFormattedMeasureTime();
+
         tie(success, output) =
             m_envInfo.precompiledEngine()->executeOriginPrecompiled(_p.codeAddress, _p.data);
+        
+        if(success)
+        {
+            end_time=dev::getFormattedMeasureTime();
+            exec_time=dev::calcTimeDiff(start_time,end_time); // 计算执行时间
+            // record合约执行时间[以太坊预编译合约]
+            stringstream ss;
+            try{
+                ss<<m_t->hash()<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
+            }
+            catch(std::exception const& e){
+                ss<<""<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
+            }
+            std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+            recorderfile->Record(ss.str(),"contract_time");
+        }
         size_t outputSize = output.size();
         m_output = owning_bytes_ref{std::move(output), 0, outputSize};
         if (g_BCOSConfig.version() >= V2_6_0 && !success)
@@ -355,13 +383,34 @@ bool Executive::callRC2(CallParameters const& _p, u256 const& _gasPrice, Address
             return true;  // true means no need to run go().
         }
     }
+    // 是C++预编译合约
     else if (m_envInfo.precompiledEngine() &&
              m_envInfo.precompiledEngine()->isPrecompiled(_p.codeAddress))
     {
+        type="CppPrecompiled";
         try
         {
+            // 执行C++预编译合约
+            start_time=dev::getFormattedMeasureTime();
+
             auto callResult = m_envInfo.precompiledEngine()->call(
                 _p.codeAddress, _p.data, _origin, _p.senderAddress);
+
+            end_time=dev::getFormattedMeasureTime();
+            exec_time=dev::calcTimeDiff(start_time,end_time); // 计算执行时间
+
+            // record合约执行时间[C++预编译合约]
+            stringstream ss;
+            try{
+                ss<<m_t->hash()<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
+            }
+            catch(std::exception const& e){
+                ss<<""<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
+            }
+            std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+            recorderfile->Record(ss.str(),"contract_time");
+
+
             // only calculate gas for the precompiled contract after v2.4.0
             if (g_BCOSConfig.version() >= V2_4_0)
             {
@@ -663,10 +712,33 @@ bool Executive::go()
             }
             else
             {
+                auto contract_addr=m_ext->myAddress(); // 合约地址
+                std::string start_time,end_time; // 开始时间和结束时间（格式化）
+                std::string exec_time="";
+                std::string type="General"; // 合约类型(一般合约)
+
                 auto mode = toRevision(m_ext->evmSchedule());
                 auto emvcMessage = getEVMCMessage();
+
+                start_time=dev::getFormattedMeasureTime();
+
                 auto ret = vm->exec(
                     *m_ext, mode, emvcMessage.get(), m_ext->code().data(), m_ext->code().size());
+
+                end_time=dev::getFormattedMeasureTime();
+                exec_time=dev::calcTimeDiff(start_time,end_time); // 计算执行时间
+                
+                // record合约执行时间[一般合约]
+                stringstream ss;
+                try{
+                    ss<<m_t->hash()<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
+                }
+                catch(std::exception const& e){
+                    ss<<""<<","<<contract_addr<<","<<start_time<<","<<end_time<<","<<exec_time<<","<<type<<"\n";
+                }
+                std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+                recorderfile->Record(ss.str(),"contract_time");
+
                 parseEVMCResult(ret);
             }
         }
