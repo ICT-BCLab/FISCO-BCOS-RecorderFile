@@ -1,9 +1,24 @@
 #include "RecorderFile.h"
 
-// namespace dev
-// {
-//     namespace recorderfile
-//     {
+std::map<std::string,bool> accessConfig {
+        {"All",true},
+        {"consensus_raft_cost", true},
+        {"block_commit_duration_end", true},
+        {"block_commit_duration_start", true},
+        {"block_tx_conflict_rate", true},
+        {"block_validation_efficiency", true},
+        {"consensus_pbft_cost", true},
+        {"contract_time", true},
+        {"db_state_read_rate", true},
+        {"db_state_write_rate", true},
+        {"peer_message_throughput", true},
+        {"transaction_pool_input_throughput", true},
+        {"tx_delay_end", true},
+        {"tx_delay_start", true},
+        {"tx_in_block_tps", true},
+        {"tx_queue_delay", true}
+};
+
 
 void RecorderFile::CreateLog()
 {
@@ -377,28 +392,63 @@ void RecorderFile::ConfigInit()
     BlockValidationEfficiencyInit();
 }
 
-int RecorderFile::Start(uint16_t port)
+void RecorderFile::RunServer(int port)
 {
-    return int(port);
+    RECORDEFILE_LOG(INFO) << LOG_DESC("[ConfigServer] start init");
+    // 初始化 oatpp 环境
+    oatpp::base::Environment::init();
+
+    // 为 HTTP 请求创建路由器
+    auto router = oatpp::web::server::HttpRouter::createShared();
+
+    // 路由请求到处理程序
+    router->route("GET", "/config/accessconfig", std::make_shared<Handler_getAccessconfig>());
+    router->route("PUT", "/config/accessconfig", std::make_shared<Handler_updateAccessconfig>());
+
+    // 创建 HTTP 连接处理程序
+    auto connectionHandler = oatpp::web::server::HttpConnectionHandler::createShared(router);
+
+    // 创建 TCP 连接提供者
+    auto connectionProvider = oatpp::network::tcp::server::ConnectionProvider::createShared({"localhost", uint16_t(port), oatpp::network::Address::IP_4});
+
+    // 创建服务器，它接受提供的 TCP 连接并将其传递给 HTTP 连接处理程序
+    oatpp::network::Server server(connectionProvider, connectionHandler);
+
+    RECORDEFILE_LOG(INFO) << LOG_DESC("[config server] is running")
+                            << LOG_KV("port", connectionProvider->getProperty("port").getData());
+    // 运行服务器
+    server.run();
+
+    // 销毁 oatpp 环境
+    oatpp::base::Environment::destroy();
+}
+
+void RecorderFile::Start(int port)
+{
+    ConfigInit();
+    RunServer(port);
 }
 
 void RecorderFile::Record(string data, string filename) 
 {
-    string path = Workdir + "/" + filename + ".csv";
-    ofstream file(path, ios::out | ios::app);
-    if (!file) 
+    if(accessConfig["All"] && accessConfig[filename])
     {
-        RECORDEFILE_LOG(ERROR) << LOG_DESC(path + " open failed");
-    }
-    try
-    {
-        file << data;
-        file.close();
-        RECORDEFILE_LOG(INFO) << LOG_DESC("[" + path +"] record succeed");
-    }
-    catch (std::exception const& e)
-    {
-        RECORDEFILE_LOG(ERROR) << LOG_DESC("[" + path +"] record missed")
-                            << LOG_KV("errorInfo", boost::diagnostic_information(e));
+        string path = Workdir + "/" + filename + ".csv";
+        ofstream file(path, ios::out | ios::app);
+        if (!file) 
+        {
+            RECORDEFILE_LOG(ERROR) << LOG_DESC(path + " open failed");
+        }
+        try
+        {
+            file << data;
+            file.close();
+            RECORDEFILE_LOG(INFO) << LOG_DESC("[" + path +"] record succeed");
+        }
+        catch (std::exception const& e)
+        {
+            RECORDEFILE_LOG(ERROR) << LOG_DESC("[" + path +"] record missed")
+                                << LOG_KV("errorInfo", boost::diagnostic_information(e));
+        }
     }
 }

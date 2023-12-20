@@ -29,6 +29,7 @@
 #include "RPCInitializer.h"
 #include "SecureInitializer.h"
 #include <memory>
+#include <librecorderfile/RecorderFile.h>
 
 namespace dev
 {

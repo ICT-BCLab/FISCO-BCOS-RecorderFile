@@ -74,6 +74,13 @@ void Initializer::init(std::string const& _path)
         m_rpcInitializer->setLedgerInitializer(m_ledgerInitializer);
         m_rpcInitializer->initConfig(pt);
         m_ledgerInitializer->startAll();
+
+        // 初始化recorderfile
+        std::unique_ptr<RecorderFile> recorderfile(new RecorderFile());
+        int port=pt.get<int>("recorderfile.server_port", 9527); // 获取config.ini中的配置
+        recorderfile->Start(port);
+        INITIALIZER_LOG(INFO) << LOG_DESC("RecorderFile ConfigServer init success")
+                               << LOG_KV("port", int(port));
     }
     catch (std::exception& e)
     {

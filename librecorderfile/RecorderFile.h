@@ -12,17 +12,24 @@
 #include <libdevcore/Common.h>
 #include <libdevcore/Exceptions.h>
 
-using namespace std;
+#include <yaml-cpp/yaml.h>
 
+#include <oatpp/network/Server.hpp>
+#include <oatpp/web/server/HttpConnectionHandler.hpp>
+#include <oatpp/network/tcp/server/ConnectionProvider.hpp>
+#include <oatpp/network/Server.hpp>
+
+#define O_UNUSERD(x) (void)x;
+
+using namespace std;
 
 #define RECORDEFILE_LOG(LEVEL) LOG(LEVEL) << LOG_BADGE("RECORDERFILE")
 
+extern map<string,bool> accessConfig;
 class RecorderFile
 {
     public:   
-        map<string, string> registerInfo;
         const string Workdir = "./log_record";
-
 
         void CreateLog();
         void TransactionPoolInputThroughputInit();
@@ -40,11 +47,13 @@ class RecorderFile
         void ConsensusRaftCostInit();
         void PeerMessageThroughputInit();
         void BlockValidationEfficiencyInit();
-
+        
         void ConfigInit();
-        int Start(uint16_t port);
+        void RunServer(int port);
+        void Start(int port);
 
         void Record(string data, string filename);
+
     private:
         ofstream TransactionPoolInputThroughputF;
         ofstream TxQueueDelayF;
@@ -62,4 +71,42 @@ class RecorderFile
         ofstream PeerMessageThroughputF;
         ofstream BlockValidationEfficiencyF;
 };
+
+class Handler_getAccessconfig: public oatpp::web::server::HttpRequestHandler 
+{
+public:
+    shared_ptr<OutgoingResponse> handle(const shared_ptr<IncomingRequest>& request) override{
+        O_UNUSERD(request);
+        YAML::Node file=YAML::LoadFile("./accessconfig.yml"); // 读取文件
+        for (YAML::const_iterator it = file.begin(); it != file.end(); ++it) {
+            // 获取kv
+            const string& key = it->first.as<string>();
+            bool value = it->second.as<bool>();
+            // 添加到map
+            accessConfig[key] = value;
+        }
+        string respStr = YAML::Dump(file); // 转成字符串
+        return ResponseFactory::createResponse(Status::CODE_200, respStr);
+    }
+};
+
+class Handler_updateAccessconfig : public oatpp::web::server::HttpRequestHandler 
+{
+public:
+    shared_ptr<OutgoingResponse> handle(const shared_ptr<IncomingRequest>& request) override{
+        string reqStr=request->readBodyToString();
+        YAML::Node newfile=YAML::Load(reqStr); // 接收传过来的更新配置
+        
+        for (YAML::const_iterator it = newfile.begin(); it != newfile.end(); ++it) {
+            // 获取kv
+            const string& key = it->first.as<string>();
+            bool value = it->second.as<bool>();
+            // 添加到map
+            accessConfig[key] = value;
+        }
+        string respStr = YAML::Dump(newfile); // 转成字符串
+        return ResponseFactory::createResponse(Status::CODE_200, respStr);
+    }
+};
+
 #endif

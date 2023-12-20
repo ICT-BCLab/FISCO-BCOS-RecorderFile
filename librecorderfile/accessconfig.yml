@@ -1,0 +1,16 @@
+All: true
+consensus_raft_cost: true
+block_commit_duration_end: true
+block_commit_duration_start: true
+block_tx_conflict_rate: true
+block_validation_efficiency: true
+consensus_pbft_cost: true
+contract_time: true
+db_state_read_rate: true
+db_state_write_rate: true
+peer_message_throughput: true
+transaction_pool_input_throughput: true
+tx_delay_end: true
+tx_delay_start: true
+tx_in_block_tps: true
+tx_queue_delay: true
