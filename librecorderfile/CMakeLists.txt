@@ -3,5 +3,5 @@ file(GLOB SRC_LIST "*.cpp")
 file(GLOB HEADERS "*.h")
 
 add_library(recorderfile ${SRC_LIST} ${HEADERS})
-target_link_libraries(recorderfile PUBLIC devcore)
+target_link_libraries(recorderfile PUBLIC devcore YamlCpp Oatpp)
 

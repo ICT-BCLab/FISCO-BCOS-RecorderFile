@@ -61,6 +61,10 @@ include(ProjectVRF)
 include(ProjectEVMONE)
 include(ProjectTASSL)
 include(ProjectGroupSig)
+# server需要的oatpp & yamlcpp
+include (ProjectOatpp)
+include(ProjectYamlCpp)
+
 
 if(USE_HSM_SDF)
   include(ProjectSDF)
