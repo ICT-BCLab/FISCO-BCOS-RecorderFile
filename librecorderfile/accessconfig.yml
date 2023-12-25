@@ -8,6 +8,7 @@ consensus_pbft_cost: true
 contract_time: true
 db_state_read_rate: true
 db_state_write_rate: true
+net_p2p_transmission_latency: true
 peer_message_throughput: true
 transaction_pool_input_throughput: true
 tx_delay_end: true

@@ -47,6 +47,7 @@ class RecorderFile
         void ConsensusRaftCostInit();
         void PeerMessageThroughputInit();
         void BlockValidationEfficiencyInit();
+        void NetP2PTransmissionLatencyInit();
         
         void ConfigInit();
         void RunServer(int port);
@@ -70,6 +71,7 @@ class RecorderFile
         ofstream ConsensusRaftCostF;
         ofstream PeerMessageThroughputF;
         ofstream BlockValidationEfficiencyF;
+        ofstream NetP2PTransmissionLatencyF;
 };
 
 class Handler_getAccessconfig: public oatpp::web::server::HttpRequestHandler 

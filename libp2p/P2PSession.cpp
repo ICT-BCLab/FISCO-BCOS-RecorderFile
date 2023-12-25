@@ -98,6 +98,48 @@ void P2PSession::heartBeat()
     }
 }
 
+void P2PSession::recordP2P()
+{
+    auto service = m_service.lock();
+    if (service && service->actived())
+    {
+        if (m_session && m_session->actived())
+        {
+            auto targetNodeID=m_nodeInfo.nodeID;
+            auto message =
+                std::dynamic_pointer_cast<P2PMessage>(service->p2pMessageFactory()->buildMessage());
+
+            message->setProtocolID(dev::eth::ProtocolID::Topic);
+            message->setPacketType(AMOPPacketType::SendTopicSeq);
+            std::shared_ptr<bytes> buffer = std::make_shared<bytes>();
+            std::string s = boost::lexical_cast<std::string>(service->topicSeq());
+            buffer->assign(s.begin(), s.end());
+            message->setBuffer(buffer);
+
+            auto self = std::weak_ptr<P2PSession>(shared_from_this());
+            dev::network::Options option;
+            option.timeout = 3 * 1000;  // 3 seconds timeout
+            auto send_time=dev::getFormattedMeasureTime();
+            auto send_id=service->id();
+            m_session->asyncSendMessage(message,option,
+            [self,targetNodeID,send_time,send_id](NetworkException e, dev::network::Message::Ptr response){
+                auto receive_time=dev::getFormattedMeasureTime();
+                auto receive_id=targetNodeID;
+                auto duration=dev::calcTimeDiff(send_time,receive_time);
+                stringstream ss;
+                ss<<send_time<<","<<send_id<<","<<receive_time<<","<<receive_id<<","<<duration<<"\n";
+                std::shared_ptr<RecorderFile> recorderfile(new RecorderFile());
+                recorderfile->Record( ss.str(),"net_p2p_transmission_latency");
+
+                SESSION_LOG(TRACE) << LOG_DESC("P2P record")
+                               << LOG_KV("error", e.errorCode())
+                               << LOG_KV("response", response.use_count());
+            });
+        }
+
+    }
+}
+
 void P2PSession::onTopicMessage(P2PMessage::Ptr message)
 {
     auto service = m_service.lock();

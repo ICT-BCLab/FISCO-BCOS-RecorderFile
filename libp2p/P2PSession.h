@@ -27,6 +27,8 @@
 #include <libp2p/Common.h>
 #include <memory>
 
+#include <librecorderfile/RecorderFile.h>
+
 namespace dev
 {
 namespace p2p
@@ -47,6 +49,7 @@ public:
     virtual void stop(dev::network::DisconnectReason reason);
     virtual bool actived() { return m_run; }
     virtual void heartBeat();
+    virtual void recordP2P();
 
     virtual dev::network::SessionFace::Ptr session() { return m_session; }
     virtual void setSession(std::shared_ptr<dev::network::SessionFace> session)
