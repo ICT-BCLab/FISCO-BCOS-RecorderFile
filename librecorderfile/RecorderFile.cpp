@@ -11,6 +11,7 @@ std::map<std::string,bool> accessConfig {
         {"contract_time", true},
         {"db_state_read_rate", true},
         {"db_state_write_rate", true},
+        {"net_p2p_transmission_latency",true},
         {"peer_message_throughput", true},
         {"transaction_pool_input_throughput", true},
         {"tx_delay_end", true},
@@ -371,6 +372,29 @@ void RecorderFile::BlockValidationEfficiencyInit()
     }
 }
 
+// P2P网络平均传播时延
+void RecorderFile::NetP2PTransmissionLatencyInit()
+{
+    string path =Workdir+"/net_p2p_transmission_latency.csv";
+    NetP2PTransmissionLatencyF.open(path, ios::out | ios::app);
+    if (!NetP2PTransmissionLatencyF)
+    {
+        RECORDEFILE_LOG(ERROR) << LOG_DESC("net_p2p_transmission_latency open failed");
+    }
+    try
+    {
+        string str = "send_time,send_id,receive_time,receive_id,duration\n";
+        NetP2PTransmissionLatencyF << str;
+        NetP2PTransmissionLatencyF.close();
+        RECORDEFILE_LOG(INFO) << LOG_DESC("[net_p2p_transmission_latency] init succeed");
+    }
+    catch (std::exception const& e)
+    {
+        RECORDEFILE_LOG(WARNING) << LOG_DESC("[net_p2p_transmission_latency] init failed")
+                            << LOG_KV("errorInfo", boost::diagnostic_information(e));
+    }
+}
+
 
 void RecorderFile::ConfigInit() 
 {
@@ -390,6 +414,7 @@ void RecorderFile::ConfigInit()
     ConsensusRaftCostInit();
     PeerMessageThroughputInit();
     BlockValidationEfficiencyInit();
+    NetP2PTransmissionLatencyInit();
 }
 
 void RecorderFile::RunServer(int port)
@@ -431,6 +456,26 @@ void RecorderFile::Start(int port)
 
 void RecorderFile::Record(string data, string filename) 
 {
+
+    // RECORDEFILE_LOG(INFO) << LOG_DESC("[Check yaml]")
+    //                         << LOG_KV("All", accessConfig["All"])
+    //                         << LOG_KV("consensus_raft_cost", accessConfig["consensus_raft_cost"])
+    //                         << LOG_KV("block_commit_duration_end", accessConfig["block_commit_duration_end"])
+    //                         << LOG_KV("block_commit_duration_start", accessConfig["block_commit_duration_start"])
+    //                         << LOG_KV("block_tx_conflict_rate", accessConfig["block_tx_conflict_rate"])
+    //                         << LOG_KV("block_validation_efficiency", accessConfig["block_validation_efficiency"])
+    //                         << LOG_KV("consensus_pbft_cost", accessConfig["consensus_pbft_cost"])
+    //                         << LOG_KV("contract_time", accessConfig["contract_time"])
+    //                         << LOG_KV("db_state_read_rate", accessConfig["db_state_read_rate"])
+    //                         << LOG_KV("db_state_write_rate", accessConfig["db_state_write_rate"])
+    //                         << LOG_KV("peer_message_throughput", accessConfig["peer_message_throughput"])
+    //                         << LOG_KV("transaction_pool_input_throughput", accessConfig["transaction_pool_input_throughput"])
+    //                         << LOG_KV("tx_delay_end", accessConfig["tx_delay_end"])
+    //                         << LOG_KV("tx_delay_start", accessConfig["tx_delay_start"])
+    //                         << LOG_KV("tx_in_block_tps", accessConfig["tx_in_block_tps"])
+    //                         << LOG_KV("tx_queue_delay", accessConfig["tx_queue_delay"])
+    //                         ;
+
     if(accessConfig["All"] && accessConfig[filename])
     {
         string path = Workdir + "/" + filename + ".csv";

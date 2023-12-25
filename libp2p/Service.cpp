@@ -287,6 +287,7 @@ void Service::onConnect(dev::network::NetworkException e, dev::network::NodeInfo
     }
     SERVICE_LOG(INFO) << LOG_DESC("Connection established") << LOG_KV("nodeID", nodeID.abridged())
                       << LOG_KV("endpoint", session->nodeIPEndpoint());
+    p2pSession->recordP2P();
 }
 
 void Service::callDisconnectHandlers(dev::network::NetworkException _e, P2PSession::Ptr _p2pSession)

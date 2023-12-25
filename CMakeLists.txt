@@ -62,9 +62,12 @@ include(ProjectEVMONE)
 include(ProjectTASSL)
 include(ProjectGroupSig)
 # server需要的oatpp & yamlcpp
-include (ProjectOatpp)
 include(ProjectYamlCpp)
+include (ProjectOatpp)
 
+
+# find_package(oatpp REQUIRED)
+# find_package(yaml-cpp REQUIRED)
 
 if(USE_HSM_SDF)
   include(ProjectSDF)
@@ -96,10 +99,11 @@ add_subdirectory(librpc)
 add_subdirectory(libinitializer)
 add_subdirectory(libsecurity)
 add_subdirectory(libeventfilter)
+
+# 加入recorderfile
+add_subdirectory(librecorderfile) 
 # generate executable binary fisco-bcos
 add_subdirectory(fisco-bcos)
-# 加入recorderfile
-add_subdirectory(librecorderfile)
 
 
 if (TESTS)
