@@ -52,3 +52,6 @@ deps/**
 # others
 .clang-format
 .cache
+
+# 不要忽略build_chain.sh
+!build_chain.sh

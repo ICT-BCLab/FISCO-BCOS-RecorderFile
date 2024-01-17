@@ -440,7 +440,7 @@ void RecorderFile::RunServer(int port)
     oatpp::network::Server server(connectionProvider, connectionHandler);
 
     RECORDEFILE_LOG(INFO) << LOG_DESC("[config server] is running")
-                            << LOG_KV("port", connectionProvider->getProperty("port").getData());
+                            << LOG_KV("port", uint16_t(port));
     // 运行服务器
     server.run();
 
