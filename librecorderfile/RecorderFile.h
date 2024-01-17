@@ -106,6 +106,11 @@ public:
             // 添加到map
             accessConfig[key] = value;
         }
+
+        std::ofstream fout("./accessconfig.yml");
+        fout << newfile; // 写入文件
+        fout.close();
+        
         string respStr = YAML::Dump(newfile); // 转成字符串
         return ResponseFactory::createResponse(Status::CODE_200, respStr);
     }
