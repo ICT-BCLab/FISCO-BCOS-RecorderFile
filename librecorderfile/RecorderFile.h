@@ -29,49 +29,27 @@ extern map<string,bool> accessConfig;
 class RecorderFile
 {
     public:   
+        struct PerformanceMetric
+        {
+            string name;
+            string parameters;
+        };
+        static const vector<PerformanceMetric> metrics;
+
         const string Workdir = "./log_record";
 
-        void CreateLog();
-        void TransactionPoolInputThroughputInit();
-        void TxQueueDelayInit();
-        void TxDelayStartInit();
-        void ContractTimeInit();
-        void BlockTxConflictRateInit();
-        void DbStateWriteRateInit();
-        void BlockCommitDurationEndInit();
-        void TxDelayEndInit();
-        void BlockCommitDurationStartInit();
-        void TxinBlockTpsInit();
-        void DbStateReadRateInit();
-        void ConsensusPBFTCostInit();
-        void ConsensusRaftCostInit();
-        void PeerMessageThroughputInit();
-        void BlockValidationEfficiencyInit();
-        void NetP2PTransmissionLatencyInit();
-        
+        void CreateLogDir();
+        void MetricsInit();
         void ConfigInit();
+
         void RunServer(int port);
+        
         void Start(int port);
 
         void Record(string data, string filename);
 
     private:
-        ofstream TransactionPoolInputThroughputF;
-        ofstream TxQueueDelayF;
-        ofstream TxDelayStartF;
-        ofstream ContractTimeF;
-        ofstream BlockTxConflictRateF;
-        ofstream DbStateWriteRateF;
-        ofstream BlockCommitDurationEndF;
-        ofstream TxDelayEndF;
-        ofstream BlockCommitDurationStartF;
-        ofstream TxinBlockTpsF;
-        ofstream DbStateReadRateF;
-        ofstream ConsensusPBFTCostF;
-        ofstream ConsensusRaftCostF;
-        ofstream PeerMessageThroughputF;
-        ofstream BlockValidationEfficiencyF;
-        ofstream NetP2PTransmissionLatencyF;
+        ofstream MetricF;
 };
 
 class Handler_getAccessconfig: public oatpp::web::server::HttpRequestHandler 
