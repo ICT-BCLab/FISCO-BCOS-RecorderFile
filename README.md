@@ -1,5 +1,96 @@
 # 面向FISCO-BCOS的区块链松耦合性能测量框架
 
+## centos编译
+### 准备工作
+首先按照[官方文档](https://fisco-bcos-documentation.readthedocs.io/zh-cn/latest/docs/tutorial/compile.html?highlight=%E7%BC%96%E8%AF%91)进行准备工作
+
+### 依赖包
+#### 原始文件下载问题
+- 针对官方原有的https://gitee.com/FISCO-BCOS/LargeFiles/tree/master/libs，存在部分包不可用的情况，需要从github重新下载包并重命名相关文件夹名
+- 针对新增的依赖oatpp和yamlcpp，需要下载https://github.com/oatpp/oatpp/archive/1.3.0.tar.gz、https://github.com/jbeder/yaml-cpp/archive/0.8.0.tar.gz，一并放入`deps/src`目录中
+
+#### 依赖包安装问题
+##### oatpp
+- 安装依赖
+```sh
+sudo yum install -y cmake3 gcc-c++ git
+```
+- 构建oatpp
+```sh
+cd /root/FISCO-BCOS-recorderfile_centos/deps/src/oatpp
+mkdir build && cd build
+cmake ..
+make -j2
+```
+- 创建目录并复制库文件
+```sh
+mkdir -p /root/FISCO-BCOS-recorderfile_centos/deps/lib/oatpp-1.3.0/
+cp src/liboatpp.a /root/FISCO-BCOS-recorderfile_centos/deps/lib/oatpp-1.3.0/
+```
+
+##### yamlcpp
+- 安装依赖
+```sh
+sudo yum install -y cmake3 gcc-c++ git
+```
+- 构建yaml-cpp
+```sh
+cd /root/FISCO-BCOS-recorderfile_centos/deps/src/yaml-cpp
+mkdir build && cd build
+cmake -DYAML_BUILD_SHARED_LIBS=OFF -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
+make -j2
+```
+- 手动创建符号链接
+```sh
+mkdir -p /root/FISCO-BCOS-recorderfile_centos/deps/lib/
+ln -s /path/to/existing/libyaml-cpp.a /root/FISCO-BCOS-recorderfile_centos/deps/lib/libyaml-cpp.a
+```
+### 编译常见报错解决
+#### sm2.cpp报错问题
+>  921 |               delete __p;
+      |               ^~~~~~~~~~
+/root/FISCO-BCOS-recorderfile_centos/libdevcrypto/sm2/sm2.cpp: In static member function ‘static int SM2::sm2GetZ(const std::string&, const EC_KEY, unsigned char, size_t&)’:
+/root/FISCO-BCOS-recorderfile_centos/libdevcrypto/sm2/sm2.cpp:312:83: note: returned from ‘void* operator new [](std::size_t)’
+  312 |     std::shared_ptr<unsigned char> zValueCache(new unsigned char[SM3_DIGEST_LENGTH]);
+      |                                                                                   ^
+cc1plus: all warnings being treated as errors
+make[2]:  [libdevcrypto/CMakeFiles/devcrypto.dir/build.make:216: libdevcrypto/CMakeFiles/devcrypto.dir/sm2/sm2.cpp.o] Error 1
+
+需要修改以 sm2.cpp 文件的第312行内容
+```cpp
+// 修改前
+std::shared_ptr<unsigned char> zValueCache(new unsigned char[SM3_DIGEST_LENGTH]);
+
+// 修改后 - 提供正确的删除器
+std::shared_ptr<unsigned char> zValueCache(new unsigned char[SM3_DIGEST_LENGTH], 
+                                           std::default_delete<unsigned char[]>());
+```
+#### GMP库相关报错
+> make[2]:  No rule to make target 'GMP_LIBRARIES-NOTFOUND', needed by 'bin/fisco-bcos'.  Stop.
+make[2]:  Waiting for unfinished jobs....
+[100%] Building CXX object fisco-bcos/main/CMakeFiles/fisco-bcos.dir/main.cpp.o
+make[1]:  [CMakeFiles/Makefile2:2233: fisco-bcos/main/CMakeFiles/fisco-bcos.dir/all] Error 2
+make:  [Makefile:136: all] Error 2
+
+
+1. **安装GMP库**：
+   ```bash
+   sudo yum install -y gmp gmp-devel
+   ```
+
+2. **重新运行CMake配置**：
+    需要重新配置CMake以便它能找到新安装的库：
+   ```bash
+   cd /root/FISCO-BCOS-recorderfile_centos
+   # 删除旧的构建目录
+   rm -rf build
+   # 创建新的构建目录
+   mkdir build && cd build
+   # 重新配置，指定GMP库位置
+   cmake .. -DGMP_LIBRARIES=/root/FISCO-BCOS-recorderfile_centos/deps/lib/libgmp.a -DGMP_INCLUDE_DIR=/root/FISCO-BCOS-recorderfile_centos/deps/include
+   ```
+
+
 ## 简介
 
 该系统不仅能够对FISCO-BCOS的多层次性能指标进行精确测量、实时记录和可视化展示，而且保证了测量框架与区块链主进程的独立关系，支持在区块链网络运行过程中对各指标测量模块的动态灵活开关。
