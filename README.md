@@ -47,14 +47,37 @@ ln -s /path/to/existing/libyaml-cpp.a /root/FISCO-BCOS-recorderfile_centos/deps/
 ```
 ### 编译常见报错解决
 #### sm2.cpp报错问题
->  921 |               delete __p;
+>  [ 56%] Building CXX object libdevcrypto/CMakeFiles/devcrypto.dir/sm2/sm2.cpp.o
+In file included from /usr/include/c++/12/bits/shared_ptr.h:53,
+                 from /usr/include/c++/12/memory:76,
+                 from /root/FISCO-BCOS-recorderfile_centos/deps/src/boost/boost/container_hash/extensions.hpp:36,
+                 from /root/FISCO-BCOS-recorderfile_centos/deps/src/boost/boost/container_hash/hash.hpp:760,
+                 from /root/FISCO-BCOS-recorderfile_centos/deps/src/boost/boost/type_index/stl_type_index.hpp:42,
+                 from /root/FISCO-BCOS-recorderfile_centos/deps/src/boost/boost/type_index.hpp:29,
+                 from /root/FISCO-BCOS-recorderfile_centos/deps/src/boost/boost/log/attributes/attribute_value_impl.hpp:18,
+                 from /root/FISCO-BCOS-recorderfile_centos/deps/src/boost/boost/log/attributes/constant.hpp:25,
+                 from /root/FISCO-BCOS-recorderfile_centos/libdevcore/Log.h:25,
+                 from /root/FISCO-BCOS-recorderfile_centos/libdevcrypto/sm2/sm2.h:24,
+                 from /root/FISCO-BCOS-recorderfile_centos/libdevcrypto/sm2/sm2.cpp:23:
+In constructor ‘std::__shared_count<_Lp>::__shared_count(_Ptr) [with _Ptr = unsigned char*; __gnu_cxx::_Lock_policy _Lp = __gnu_cxx::_S_atomic]’,
+    inlined from ‘std::__shared_count<_Lp>::__shared_count(_Ptr, std::false_type) [with _Ptr = unsigned char*; __gnu_cxx::_Lock_policy _Lp = __gnu_cxx::_S_atomic]’ at /usr/include/c++/12/bits/shared_ptr_base.h:928:22,
+    inlined from ‘std::__shared_ptr<_Tp, _Lp>::__shared_ptr(_Yp*) [with _Yp = unsigned char; <template-parameter-2-2> = void; _Tp = unsigned char; __gnu_cxx::_Lock_policy _Lp = __gnu_cxx::_S_atomic]’ at /usr/include/c++/12/bits/shared_ptr_base.h:1469:17,
+    inlined from ‘std::shared_ptr<_Tp>::shared_ptr(_Yp*) [with _Yp = unsigned char; <template-parameter-2-2> = void; _Tp = unsigned char]’ at /usr/include/c++/12/bits/shared_ptr.h:214:46,
+    inlined from ‘static int SM2::sm2GetZ(const std::string&, const EC_KEY*, unsigned char*, size_t&)’ at /root/FISCO-BCOS-recorderfile_centos/libdevcrypto/sm2/sm2.cpp:312:84:
+/usr/include/c++/12/bits/shared_ptr_base.h:921:15: error: ‘void operator delete(void*)’ called on pointer returned from a mismatched allocation function [-Werror=mismatched-new-delete]
+  921 |               delete __p;
       |               ^~~~~~~~~~
-/root/FISCO-BCOS-recorderfile_centos/libdevcrypto/sm2/sm2.cpp: In static member function ‘static int SM2::sm2GetZ(const std::string&, const EC_KEY, unsigned char, size_t&)’:
+/root/FISCO-BCOS-recorderfile_centos/libdevcrypto/sm2/sm2.cpp: In static member function ‘static int SM2::sm2GetZ(const std::string&, const EC_KEY*, unsigned char*, size_t&)’:
 /root/FISCO-BCOS-recorderfile_centos/libdevcrypto/sm2/sm2.cpp:312:83: note: returned from ‘void* operator new [](std::size_t)’
   312 |     std::shared_ptr<unsigned char> zValueCache(new unsigned char[SM3_DIGEST_LENGTH]);
       |                                                                                   ^
 cc1plus: all warnings being treated as errors
-make[2]:  [libdevcrypto/CMakeFiles/devcrypto.dir/build.make:216: libdevcrypto/CMakeFiles/devcrypto.dir/sm2/sm2.cpp.o] Error 1
+make[2]: *** [libdevcrypto/CMakeFiles/devcrypto.dir/build.make:216: libdevcrypto/CMakeFiles/devcrypto.dir/sm2/sm2.cpp.o] Error 1
+make[1]: *** [CMakeFiles/Makefile2:1300: libdevcrypto/CMakeFiles/devcrypto.dir/all] Error 2
+make[1]: *** Waiting for unfinished jobs....
+[ 56%] Linking CXX static library librecorderfile.a
+[ 56%] Built target recorderfile
+make: *** [Makefile:136: all] Error 2
 
 需要修改以 sm2.cpp 文件的第312行内容
 ```cpp

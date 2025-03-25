@@ -39,7 +39,6 @@ class RecorderFile
         const string Workdir = "./log_record";
 
         void CreateLogDir();
-        void MetricsInit();
         void ConfigInit();
 
         void RunServer(int port);
