@@ -26,31 +26,28 @@ void RecorderFile::CreateLogDir()
     system(cmd.c_str());
 }
 
-void RecorderFile::MetricsInit()
-{
-    const std::vector<RecorderFile::PerformanceMetric> metrics = {
-        {"block_commit_duration_end", "measure_time,block_height,block_hash,block_tx_count,block_txsroot"},
-        {"block_commit_duration_start", "measure_time,block_height"},
-        {"block_tx_conflict_rate", "measure_time,block_height,block_tx_count,conflict_count"},
-        {"block_validation_efficiency", "start_time,end_time,cost_time,block_height,block_tx_count"},
-        {"consensus_pbft_cost", "block_height,pbft_start,pbft_end,pbft_cost,type"},
-        {"consensus_raft_cost", "block_height,raft_start,raft_end,raft_cost"},
-        {"contract_time", "tx_hash,contract_address,start_time,end_time,exec_time,type"},
-        {"db_state_read_rate", "measure_time,block_hash,read_duration,type"},
-        {"db_state_write_rate", "start_time,end_time,block_height,block_hash,write_duration"},
-        {"net_p2p_transmission_latency", "send_time,send_id,receive_time,receive_id,duration"},
-        {"peer_message_throughput", "measure_time,action_type,message_type,message_size"},
-        {"transaction_pool_input_throughput", "measure_time,tx_hash,source"},
-        {"tx_delay_start", "measure_time,tx_hash"},
-        {"tx_in_block_tps", "measure_time,block_height,block_txsroot,block_tx_count"},
-        {"tx_queue_delay", "measure_time,tx_hash,in/outFlag"},
-    };
-}
+const std::vector<RecorderFile::PerformanceMetric> RecorderFile::metrics = {
+    {"block_commit_duration_end", "measure_time,block_height,block_hash,block_tx_count,block_txsroot"},
+    {"block_commit_duration_start", "measure_time,block_height"},
+    {"block_tx_conflict_rate", "measure_time,block_height,block_tx_count,conflict_count"},
+    {"block_validation_efficiency", "start_time,end_time,cost_time,block_height,block_tx_count"},
+    {"consensus_pbft_cost", "block_height,pbft_start,pbft_end,pbft_cost,type"},
+    {"consensus_raft_cost", "block_height,raft_start,raft_end,raft_cost"},
+    {"contract_time", "tx_hash,contract_address,start_time,end_time,exec_time,type"},
+    {"db_state_read_rate", "measure_time,block_hash,read_duration,type"},
+    {"db_state_write_rate", "start_time,end_time,block_height,block_hash,write_duration"},
+    {"net_p2p_transmission_latency", "send_time,send_id,receive_time,receive_id,duration"},
+    {"peer_message_throughput", "measure_time,action_type,message_type,message_size"},
+    {"transaction_pool_input_throughput", "measure_time,tx_hash,source"},
+    {"tx_delay_start", "measure_time,tx_hash"},
+    {"tx_delay_end", "measure_time,block_height,tx_hash"},
+    {"tx_in_block_tps", "measure_time,block_height,block_txsroot,block_tx_count"},
+    {"tx_queue_delay", "measure_time,tx_hash,in/outFlag"},
+};
 
 void RecorderFile::ConfigInit() 
 {
     CreateLogDir();
-    MetricsInit();
 
     for (const auto& metric : metrics)
     {
